@@ -14,6 +14,8 @@
     "diff": "^7.0.0",
     "minimatch": "^10.0.1",
     "zod": "^3.24.1",
-    "zod-to-json-schema": "^3.23.5"
+    "zod-to-json-schema": "^3.23.5",
+    "@pinecone-database/pinecone": "^1.1.2",
+    "openai": "^4.28.0"
   }
 }

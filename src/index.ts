@@ -129,3 +129,11 @@ runServer().catch((error) => {
 	console.error("Fatal error running server:", error);
 	process.exit(1);
 });
+
+if (!process.env.OPENAI_API_KEY) {
+	throw new Error("OPENAI_API_KEY environment variable is required");
+}
+
+// if (!process.env.PINECONE_API_KEY || !process.env.PINECONE_ENVIRONMENT || !process.env.PINECONE_INDEX_NAME) {
+// 	throw new Error("PINECONE_API_KEY, PINECONE_ENVIRONMENT, and PINECONE_INDEX_NAME environment variables are required");
+// }

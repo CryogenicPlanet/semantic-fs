@@ -14,6 +14,7 @@ import { createTwoFilesPatch } from "diff";
 import { minimatch } from "minimatch";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import { upsertEmbeddings, semanticSearch, upsertDirectoryEmbeddings } from "./embeddings";
 
 const ToolInputSchema = ToolSchema.shape.inputSchema;
 type ToolInput = z.infer<typeof ToolInputSchema>;
@@ -93,6 +94,22 @@ export function expandHome(filepath: string): string {
 
 export function normalizeLineEndings(text: string): string {
 	return text.replace(/\r\n/g, "\n");
+}
+
+export async function getAllFiles(dirPath: string): Promise<string[]> {
+	const files: string[] = [];
+	const entries = await readdir(dirPath, { withFileTypes: true });
+	
+	for (const entry of entries) {
+		const fullPath = path.join(dirPath, entry.name);
+		if (entry.isDirectory()) {
+			files.push(...await getAllFiles(fullPath));
+		} else if (entry.isFile()) {
+			files.push(fullPath);
+		}
+	}
+	
+	return files;
 }
 
 // Core filesystem functions
@@ -366,6 +383,53 @@ export const tools = [
 			required: [],
 		},
 	},
+	// {
+	// 	name: "fs_embed_file",
+	// 	description: "Generate embeddings for a file and store them in Pinecone",
+	// 	parameters: {
+	// 		type: "object",
+	// 		properties: {
+	// 			path: {
+	// 				type: "string",
+	// 				description: "Path to the file to embed",
+	// 			},
+	// 		},
+	// 		required: ["path"],
+	// 	},
+	// },
+	// {
+	// 	name: "fs_embed_directory",
+	// 	description: "Generate embeddings for all files in a directory and store them in Pinecone",
+	// 	parameters: {
+	// 		type: "object",
+	// 		properties: {
+	// 			path: {
+	// 				type: "string",
+	// 				description: "Path to the directory to embed",
+	// 			},
+	// 		},
+	// 		required: ["path"],
+	// 	},
+	// },
+	// {
+	// 	name: "fs_semantic_search",
+	// 	description: "Search through embedded files using semantic similarity",
+	// 	parameters: {
+	// 		type: "object",
+	// 		properties: {
+	// 			query: {
+	// 				type: "string",
+	// 				description: "The search query",
+	// 			},
+	// 			limit: {
+	// 				type: "number",
+	// 				description: "Maximum number of results to return",
+	// 				default: 5,
+	// 			},
+	// 		},
+	// 		required: ["query"],
+	// 	},
+	// },
 ];
 
 // Tool handlers
@@ -590,6 +654,44 @@ export async function handleTool(
 				],
 			};
 		}
+
+		// case "fs_embed_file": {
+		// 	const parsed = z.object({ path: z.string() }).safeParse(args);
+		// 	if (!parsed.success) {
+		// 		throw new Error(`Invalid arguments for embed_file: ${parsed.error}`);
+		// 	}
+		// 	const validPath = await validatePath(parsed.data.path, allowedDirectories);
+		// 	const result = await upsertEmbeddings(validPath);
+		// 	return {
+		// 		content: [{ type: "text", text: JSON.stringify(result) }],
+		// 	};
+		// }
+
+		// case "fs_embed_directory": {
+		// 	const parsed = z.object({ path: z.string() }).safeParse(args);
+		// 	if (!parsed.success) {
+		// 		throw new Error(`Invalid arguments for embed_directory: ${parsed.error}`);
+		// 	}
+		// 	const validPath = await validatePath(parsed.data.path, allowedDirectories);
+		// 	const results = await upsertDirectoryEmbeddings(validPath);
+		// 	return {
+		// 		content: [{ type: "text", text: JSON.stringify(results) }],
+		// 	};
+		// }
+
+		// case "fs_semantic_search": {
+		// 	const parsed = z.object({ 
+		// 		query: z.string(),
+		// 		limit: z.number().optional()
+		// 	}).safeParse(args);
+		// 	if (!parsed.success) {
+		// 		throw new Error(`Invalid arguments for semantic_search: ${parsed.error}`);
+		// 	}
+		// 	const results = await semanticSearch(parsed.data.query, parsed.data.limit);
+		// 	return {
+		// 		content: [{ type: "text", text: JSON.stringify(results) }],
+		// 	};
+		// }
 
 		default:
 			return null;
