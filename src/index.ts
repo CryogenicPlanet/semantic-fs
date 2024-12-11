@@ -1,3 +1,6 @@
+import { mkdir, readdir, realpath, rm, stat } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -9,8 +12,6 @@ import { createTwoFilesPatch, diffLines } from "diff";
 import { minimatch } from "minimatch";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import os from "node:os";
-import path from "node:path";
 
 // Command line argument parsing
 const args = process.argv.slice(2);
@@ -42,7 +43,7 @@ const allowedDirectories = args.map((dir) =>
 await Promise.all(
 	args.map(async (dir) => {
 		try {
-			const stats = await Bun.file(dir).stat();
+			const stats = await stat(dir);
 			if (!stats.isDirectory()) {
 				console.error(`Error: ${dir} is not a directory`);
 				process.exit(1);
@@ -75,7 +76,7 @@ async function validatePath(requestedPath: string): Promise<string> {
 
 	// Handle symlinks by checking their real path
 	try {
-		const realPath = await Bun.file(absolute).realPath();
+		const realPath = await realpath(absolute);
 		const normalizedReal = normalizePath(realPath);
 		const isRealPathAllowed = allowedDirectories.some((dir) =>
 			normalizedReal.startsWith(dir),
@@ -90,10 +91,10 @@ async function validatePath(requestedPath: string): Promise<string> {
 		// For new files that don't exist yet, verify parent directory
 		const parentDir = path.dirname(absolute);
 		try {
-			const realParentPath = await Bun.file(parentDir).realPath();
+			const realParentPath = await realpath(parentDir);
 			const normalizedParent = normalizePath(realParentPath);
 			const isParentAllowed = allowedDirectories.some((dir) =>
-					normalizedParent.startsWith(dir),
+				normalizedParent.startsWith(dir),
 			);
 			if (!isParentAllowed) {
 				throw new Error(
@@ -186,7 +187,7 @@ const server = new Server(
 
 // Tool implementations
 async function getFileStats(filePath: string): Promise<FileInfo> {
-	const stats = await Bun.file(filePath).stat();
+	const stats = await stat(filePath);
 	return {
 		size: stats.size,
 		created: stats.birthtime,
@@ -206,7 +207,7 @@ async function searchFiles(
 	const results: string[] = [];
 
 	async function search(currentPath: string) {
-		const entries = await Bun.file(currentPath).readDir();
+		const entries = await readdir(currentPath);
 		if (!entries) return;
 
 		for (const entry of entries) {
@@ -233,7 +234,7 @@ async function searchFiles(
 					results.push(fullPath);
 				}
 
-				const stats = await Bun.file(fullPath).stat();
+				const stats = await stat(fullPath);
 				if (stats.isDirectory()) {
 					await search(fullPath);
 				}
@@ -534,7 +535,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 					);
 				}
 				const validPath = await validatePath(parsed.data.path);
-				await Bun.mkdir(validPath, { recursive: true });
+				await mkdir(validPath, { recursive: true });
 				return {
 					content: [
 						{
@@ -553,13 +554,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 					);
 				}
 				const validPath = await validatePath(parsed.data.path);
-				const entries = await Bun.file(validPath).readDir();
+				const entries = await readdir(validPath);
 				if (!entries) {
 					throw new Error(`Failed to read directory: ${parsed.data.path}`);
 				}
 				const formatted = await Promise.all(
 					entries.map(async (entry) => {
-						const stats = await Bun.file(path.join(validPath, entry)).stat();
+						const stats = await stat(path.join(validPath, entry));
 						return `${stats.isDirectory() ? "[DIR]" : "[FILE]"} ${entry}`;
 					}),
 				);
@@ -577,7 +578,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 				const validDestPath = await validatePath(parsed.data.destination);
 				const content = await Bun.file(validSourcePath).arrayBuffer();
 				await Bun.write(validDestPath, content);
-				await Bun.file(validSourcePath).delete();
+				await rm(validSourcePath);
 				return {
 					content: [
 						{
