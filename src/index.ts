@@ -96,7 +96,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 		}
 
 		// Handle filesystem tools
-		if (name.startsWith("fs:")) {
+		if (name.startsWith("fs_")) {
 			const result = await fs.handleTool(name, args, allowedDirectories);
 			if (result) return result;
 		}

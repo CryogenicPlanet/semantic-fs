@@ -275,7 +275,7 @@ export async function applyFileEdits(
 // Tool definitions
 export const tools = [
 	{
-		name: "fs:read_file",
+		name: "fs_read_file",
 		description:
 			"Read the complete contents of a file from the file system. " +
 			"Handles various text encodings and provides detailed error messages " +
@@ -284,7 +284,7 @@ export const tools = [
 		inputSchema: zodToJsonSchema(ReadFileArgsSchema) as ToolInput,
 	},
 	{
-		name: "fs:read_multiple_files",
+		name: "fs_read_multiple_files",
 		description:
 			"Read the contents of multiple files simultaneously. This is more " +
 			"efficient than reading files one by one when you need to analyze " +
@@ -294,7 +294,7 @@ export const tools = [
 		inputSchema: zodToJsonSchema(ReadMultipleFilesArgsSchema) as ToolInput,
 	},
 	{
-		name: "fs:write_file",
+		name: "fs_write_file",
 		description:
 			"Create a new file or completely overwrite an existing file with new content. " +
 			"Use with caution as it will overwrite existing files without warning. " +
@@ -302,7 +302,7 @@ export const tools = [
 		inputSchema: zodToJsonSchema(WriteFileArgsSchema) as ToolInput,
 	},
 	{
-		name: "fs:edit_file",
+		name: "fs_edit_file",
 		description:
 			"Make line-based edits to a text file. Each edit replaces exact line sequences " +
 			"with new content. Returns a git-style diff showing the changes made. " +
@@ -310,7 +310,7 @@ export const tools = [
 		inputSchema: zodToJsonSchema(EditFileArgsSchema) as ToolInput,
 	},
 	{
-		name: "fs:create_directory",
+		name: "fs_create_directory",
 		description:
 			"Create a new directory or ensure a directory exists. Can create multiple " +
 			"nested directories in one operation. If the directory already exists, " +
@@ -319,7 +319,7 @@ export const tools = [
 		inputSchema: zodToJsonSchema(CreateDirectoryArgsSchema) as ToolInput,
 	},
 	{
-		name: "fs:list_directory",
+		name: "fs_list_directory",
 		description:
 			"Get a detailed listing of all files and directories in a specified path. " +
 			"Results clearly distinguish between files and directories with [FILE] and [DIR] " +
@@ -328,7 +328,7 @@ export const tools = [
 		inputSchema: zodToJsonSchema(ListDirectoryArgsSchema) as ToolInput,
 	},
 	{
-		name: "fs:move_file",
+		name: "fs_move_file",
 		description:
 			"Move or rename files and directories. Can move files between directories " +
 			"and rename them in a single operation. If the destination exists, the " +
@@ -337,7 +337,7 @@ export const tools = [
 		inputSchema: zodToJsonSchema(MoveFileArgsSchema) as ToolInput,
 	},
 	{
-		name: "fs:search_files",
+		name: "fs_search_files",
 		description:
 			"Recursively search for files and directories matching a pattern. " +
 			"Searches through all subdirectories from the starting path. The search " +
@@ -347,7 +347,7 @@ export const tools = [
 		inputSchema: zodToJsonSchema(SearchFilesArgsSchema) as ToolInput,
 	},
 	{
-		name: "fs:get_file_info",
+		name: "fs_get_file_info",
 		description:
 			"Retrieve detailed metadata about a file or directory. Returns comprehensive " +
 			"information including size, creation time, last modified time, permissions, " +
@@ -356,7 +356,7 @@ export const tools = [
 		inputSchema: zodToJsonSchema(GetFileInfoArgsSchema) as ToolInput,
 	},
 	{
-		name: "fs:list_allowed_directories",
+		name: "fs_list_allowed_directories",
 		description:
 			"Returns the list of directories that this server is allowed to access. " +
 			"Use this to understand which directories are available before trying to access files.",
@@ -375,7 +375,7 @@ export async function handleTool(
 	allowedDirectories: string[],
 ) {
 	switch (name) {
-		case "fs:read_file": {
+		case "fs_read_file": {
 			const parsed = ReadFileArgsSchema.safeParse(args);
 			if (!parsed.success) {
 				throw new Error(`Invalid arguments for read_file: ${parsed.error}`);
@@ -390,7 +390,7 @@ export async function handleTool(
 			};
 		}
 
-		case "fs:read_multiple_files": {
+		case "fs_read_multiple_files": {
 			const parsed = ReadMultipleFilesArgsSchema.safeParse(args);
 			if (!parsed.success) {
 				throw new Error(
@@ -415,7 +415,7 @@ export async function handleTool(
 			};
 		}
 
-		case "fs:write_file": {
+		case "fs_write_file": {
 			const parsed = WriteFileArgsSchema.safeParse(args);
 			if (!parsed.success) {
 				throw new Error(`Invalid arguments for write_file: ${parsed.error}`);
@@ -432,7 +432,7 @@ export async function handleTool(
 			};
 		}
 
-		case "fs:edit_file": {
+		case "fs_edit_file": {
 			const parsed = EditFileArgsSchema.safeParse(args);
 			if (!parsed.success) {
 				throw new Error(`Invalid arguments for edit_file: ${parsed.error}`);
@@ -459,7 +459,7 @@ export async function handleTool(
 			};
 		}
 
-		case "fs:create_directory": {
+		case "fs_create_directory": {
 			const parsed = CreateDirectoryArgsSchema.safeParse(args);
 			if (!parsed.success) {
 				throw new Error(
@@ -481,7 +481,7 @@ export async function handleTool(
 			};
 		}
 
-		case "fs:list_directory": {
+		case "fs_list_directory": {
 			const parsed = ListDirectoryArgsSchema.safeParse(args);
 			if (!parsed.success) {
 				throw new Error(
@@ -507,7 +507,7 @@ export async function handleTool(
 			};
 		}
 
-		case "fs:move_file": {
+		case "fs_move_file": {
 			const parsed = MoveFileArgsSchema.safeParse(args);
 			if (!parsed.success) {
 				throw new Error(`Invalid arguments for move_file: ${parsed.error}`);
@@ -533,7 +533,7 @@ export async function handleTool(
 			};
 		}
 
-		case "fs:search_files": {
+		case "fs_search_files": {
 			const parsed = SearchFilesArgsSchema.safeParse(args);
 			if (!parsed.success) {
 				throw new Error(`Invalid arguments for search_files: ${parsed.error}`);
@@ -558,7 +558,7 @@ export async function handleTool(
 			};
 		}
 
-		case "fs:get_file_info": {
+		case "fs_get_file_info": {
 			const parsed = GetFileInfoArgsSchema.safeParse(args);
 			if (!parsed.success) {
 				throw new Error(`Invalid arguments for get_file_info: ${parsed.error}`);
@@ -580,7 +580,7 @@ export async function handleTool(
 			};
 		}
 
-		case "fs:list_allowed_directories": {
+		case "fs_list_allowed_directories": {
 			return {
 				content: [
 					{
