@@ -11,21 +11,28 @@ import * as fs from "./fs";
 const CONFIG_DIR = path.join(os.homedir(), ".config", "semantic-fs");
 const CONFIG_FILE = path.join(CONFIG_DIR, "approved.json");
 
-import { mkdir, readdir, rm, stat } from "node:fs/promises";
+import {
+	mkdir,
+	readFile,
+	readdir,
+	rm,
+	stat,
+	writeFile,
+} from "node:fs/promises";
 // Initialize config directory and file if they don't exist
 async function initializeConfig() {
 	try {
 		try {
-			await Bun.file(CONFIG_FILE).json();
+			await readFile(CONFIG_FILE, "utf-8");
 		} catch {
-			await Bun.write(
+			await writeFile(
 				CONFIG_FILE,
 				JSON.stringify({ allowedDirectories: [] }, null, 2),
 			);
 		}
 	} catch {
 		await mkdir(CONFIG_DIR, { recursive: true });
-		await Bun.write(
+		await writeFile(
 			CONFIG_FILE,
 			JSON.stringify({ allowedDirectories: [] }, null, 2),
 		);
@@ -35,7 +42,8 @@ async function initializeConfig() {
 // Load allowed directories from config
 async function loadAllowedDirectories(): Promise<string[]> {
 	await initializeConfig();
-	const config = await Bun.file(CONFIG_FILE).json();
+	const configData = await readFile(CONFIG_FILE, "utf-8");
+	const config = JSON.parse(configData);
 	return config.allowedDirectories.map((dir: string) =>
 		fs.normalizePath(path.resolve(fs.expandHome(dir))),
 	);
@@ -43,7 +51,8 @@ async function loadAllowedDirectories(): Promise<string[]> {
 
 // Add new directories to config
 async function addAllowedDirectories(directories: string[]) {
-	const config = await Bun.file(CONFIG_FILE).json();
+	const configData = await readFile(CONFIG_FILE, "utf-8");
+	const config = JSON.parse(configData);
 	const normalizedNew = directories.map((dir) =>
 		fs.normalizePath(path.resolve(fs.expandHome(dir))),
 	);
@@ -52,7 +61,7 @@ async function addAllowedDirectories(directories: string[]) {
 		...new Set([...config.allowedDirectories, ...normalizedNew]),
 	];
 
-	await Bun.write(CONFIG_FILE, JSON.stringify(config, null, 2));
+	await writeFile(CONFIG_FILE, JSON.stringify(config, null, 2));
 	return config.allowedDirectories;
 }
 

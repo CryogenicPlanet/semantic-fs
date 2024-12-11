@@ -1,4 +1,12 @@
-import { mkdir, readdir, realpath, rm, stat } from "node:fs/promises";
+import {
+	mkdir,
+	readFile,
+	readdir,
+	realpath,
+	rm,
+	stat,
+	writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { ToolSchema } from "@modelcontextprotocol/sdk/types.js";
@@ -204,7 +212,7 @@ export async function applyFileEdits(
 	edits: Array<{ oldText: string; newText: string }>,
 	dryRun = false,
 ): Promise<string> {
-	const content = normalizeLineEndings(await Bun.file(filePath).text());
+	const content = normalizeLineEndings(await readFile(filePath, "utf-8"));
 
 	let modifiedContent = content;
 	for (const edit of edits) {
@@ -258,7 +266,7 @@ export async function applyFileEdits(
 	}
 
 	if (!dryRun) {
-		await Bun.write(filePath, modifiedContent);
+		await writeFile(filePath, modifiedContent);
 	}
 
 	return modifiedContent;
@@ -376,7 +384,7 @@ export async function handleTool(
 				parsed.data.path,
 				allowedDirectories,
 			);
-			const content = await Bun.file(validPath).text();
+			const content = await readFile(validPath, "utf-8");
 			return {
 				content: [{ type: "text", text: content }],
 			};
@@ -393,7 +401,7 @@ export async function handleTool(
 				parsed.data.paths.map(async (filePath: string) => {
 					try {
 						const validPath = await validatePath(filePath, allowedDirectories);
-						const content = await Bun.file(validPath).text();
+						const content = await readFile(validPath, "utf-8");
 						return `${filePath}:\n${content}\n`;
 					} catch (error) {
 						const errorMessage =
@@ -416,7 +424,7 @@ export async function handleTool(
 				parsed.data.path,
 				allowedDirectories,
 			);
-			await Bun.write(validPath, parsed.data.content);
+			await writeFile(validPath, parsed.data.content);
 			return {
 				content: [
 					{ type: "text", text: `Successfully wrote to ${parsed.data.path}` },
@@ -441,7 +449,7 @@ export async function handleTool(
 			const diff = createTwoFilesPatch(
 				parsed.data.path,
 				parsed.data.path,
-				await Bun.file(validPath).text(),
+				await readFile(validPath, "utf-8"),
 				result,
 				"original",
 				"modified",
@@ -512,8 +520,8 @@ export async function handleTool(
 				parsed.data.destination,
 				allowedDirectories,
 			);
-			const content = await Bun.file(validSourcePath).arrayBuffer();
-			await Bun.write(validDestPath, content);
+			const content = await readFile(validSourcePath);
+			await writeFile(validDestPath, content);
 			await rm(validSourcePath);
 			return {
 				content: [
